@@ -1,8 +1,33 @@
 use contracts::*;
 use std::collections::HashMap;
+use std::io::{self, Write}; 
+use std::fs;
+use std::fmt;
 
 fn main() {
-    println!("Hello, world!");
+    let mut kwic = KwicSystem::new();
+
+    let arquivo = std::fs::read_to_string("text.txt");
+    
+    match arquivo {
+    Ok(texto) => {
+        for linha in texto.lines() {
+            kwic.add_line(linha.to_string());
+        }
+    }
+    Err(erro) => {
+        println!("Erro ao ler o arquivo: {}", erro);
+    }
+
+    
+}
+
+    for line in kwic.lines {
+        println!("{}", line);
+    }
+
+    // implementar resto da lógica do código depois
+    
 }
 
 pub struct KwicSystem{
@@ -16,6 +41,19 @@ pub struct KwicResult{
     pub key_word: String,
     pub right_context: String,
     pub line: String,
+
+    
+}
+
+impl fmt::Display for KwicResult {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}**{}**{}",
+            self.key_word, 
+            self.right_context, 
+            self.left_context)
+    }
+
+
 }
 
 impl KwicSystem{
