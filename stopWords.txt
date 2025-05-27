@@ -1,0 +1,10 @@
+a, à, às, ao, aos, aquele, aqueles, aquela, aquelas, aquilo, ainda, algo, alguns, algumas,
+ante, antes, após, até, com, como, contra, contudo, da, das, de, dela, delas, dele, deles,
+desde, do, dos, e, é, ela, elas, ele, eles, em, entre, era, essa, essas, esse, esses, esta,
+está, estão, estas, este, estes, estou, eu, foi, fomos, for, fora, foram, fosse, fossem, fui,
+há, isso, isto, já, la, lhe, lhes, mais, mas, me, mesma, mesmas, mesmo, mesmos, meu, meus, minha,
+minhas, muito, na, nas, nem, no, nos, nossa, nossas, nosso, nossos, nunca, o, os, ou, para,
+pela, pelas, pelo, pelos, por, porque, porém, posso, que, quem, qual, quando, quanto, quantos,
+quase, se, seja, sejam, sem, sendo, seu, seus, si, sido, só, sob, sobre, sua, suas, também,
+te, tem, têm, tendo, tive, toda, todas, todo, todos, tu, tua, tuas, um, uma, umas, uns, vai,
+vão, vem, vós, vos, você, vocês
