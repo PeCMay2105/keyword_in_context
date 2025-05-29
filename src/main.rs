@@ -100,14 +100,21 @@ pub struct KwicResult{
 
 impl fmt::Display for KwicResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}**{}**{}",
+        write!(f, "{}: {} **{}** {}",
             self.key_word,
-            self.right_context,
-            self.left_context)
+            self.left_context,
+            self.key_word,
+            self.right_context)
     }
 
-
 }
+
+// impl KwicResult {
+//     pub fn new() -> Self{
+//         KwicResult { n_line: 0, left_context: (), key_word: (), right_context: (), line: () }
+//     }
+// }
+
 
 impl KwicSystem{
 
@@ -180,5 +187,28 @@ impl KwicSystem{
         }
 
         resultado
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::string;
+
+    use super::*;
+
+    #[test]
+    fn normalize_test() {
+
+        let mut kwic = KwicSystem::new();
+        let string = "TeSTes #12312314";
+        assert_eq!(kwic.normalize(string), "testes");
+    }
+
+    #[test]
+    fn normalize_test() {
+
+        let mut kwic = KwicSystem::new();
+        let string = "TeSTes #12312314";
+        assert_eq!(kwic.normalize(string), "testes");
     }
 }
