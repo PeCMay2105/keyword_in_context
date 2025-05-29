@@ -227,7 +227,7 @@ mod tests {
         assert_eq!(kwic.lines, linhas);
     }
 
-    #[test]
+    // #[test]
     // fn search_keyword_test() {
 
     //     let mut kwic = KwicSystem::new();
