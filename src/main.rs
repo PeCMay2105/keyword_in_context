@@ -22,7 +22,7 @@ fn main() {
                     .map(|word| word.to_string())
                     .collect();
 
-                let keywords = find_keyWords(&palavras);
+                let keywords = find_keyWords(&palavras, &STOPWORDS);    
                 for keyword in keywords {
                     all_keywords.insert(keyword);
                 }
@@ -70,11 +70,12 @@ fn parse_files(path:&str) -> Vec<String>{
     lines
 }
 
-
-pub fn find_keyWords(linha:&[String])-> Vec<String>{
+// passando as stop_words como parâmetro para os testes da função
+pub fn find_keyWords(linha: &[String], stopwords_set: &HashSet<String>) -> Vec<String> {
     let mut keyWords = Vec::<String>::new();
-    for palavra in linha{
-        if !STOPWORDS.contains(palavra){
+    for palavra in linha {
+        
+        if !stopwords_set.contains(palavra) {
             keyWords.push(palavra.clone());
         }
     }
@@ -83,11 +84,13 @@ pub fn find_keyWords(linha:&[String])-> Vec<String>{
 
 
 
+
 pub struct KwicSystem{
     pub lines: Vec<String>,
     pub pos_index: HashMap<String,Vec<usize>>,
 }
 
+#[derive(Debug, PartialEq)] // para usar nos testes
 pub struct KwicResult{
     pub n_line: usize,
     pub left_context: String,
@@ -193,22 +196,57 @@ impl KwicSystem{
 #[cfg(test)]
 mod tests {
     use std::string;
-
+    use std::collections::{HashMap,HashSet};
     use super::*;
 
     #[test]
     fn normalize_test() {
 
-        let mut kwic = KwicSystem::new();
+        let kwic = KwicSystem::new();
         let string = "TeSTes #12312314";
         assert_eq!(kwic.normalize(string), "testes");
     }
 
     #[test]
-    fn normalize_test() {
+    fn find_keywords_test() {
+
+        let stopwords: HashSet<String> = HashSet::from(["de".to_string(), "o".to_string(), "a".to_string()]);        
+        let linha: Vec<String> = vec!["testes".to_string(), "de".to_string(), "software".to_string()];
+
+        assert_eq!(find_keyWords(&linha, &stopwords), ["testes", "software"]);
+    }
+
+    #[test]
+    fn add_lines_test() {
 
         let mut kwic = KwicSystem::new();
-        let string = "TeSTes #12312314";
-        assert_eq!(kwic.normalize(string), "testes");
+        kwic.add_line("linha para teste".to_string());
+        
+        let linhas: Vec<String> = vec!["linha para teste".to_string()];
+        
+        assert_eq!(kwic.lines, linhas);
     }
+
+    #[test]
+    // fn search_keyword_test() {
+
+    //     let mut kwic = KwicSystem::new();
+    //     kwic.add_line("linha para teste".to_string());
+        
+    //     let linhas: Vec<String> = vec!["linha para teste".to_string()];
+
+    //     let result = KwicResult {
+    //         n_line: 0,
+    //         left_context: "".to_string(),
+    //         key_word: "linha".to_string(),
+    //         right_context: "para teste".to_string(),
+    //         line: "linha para teste".to_string(),
+    //     };
+        
+    //     let result_vector: Vec<KwicResult> = vec![result]; 
+    //     let kwic_vector = kwic.search_keyword("linha");
+        
+        
+    //     assert_eq!(kwic_vector[0], result_vector[0]);        
+    // }
 }
