@@ -29,7 +29,11 @@ fn main() {
             }
 
             // Executa KWIC para cada keyword única
-            for keyword in all_keywords {
+            // Ordena as keywords antes de iterar
+            let mut sorted_keywords: Vec<String> = all_keywords.into_iter().collect();
+            sorted_keywords.sort();
+
+            for keyword in sorted_keywords {
                 println!("=== Resultados para '{}' ===", keyword);
                 let results = kwic.search_keyword(&keyword);
 
@@ -38,6 +42,7 @@ fn main() {
                 }
                 println!();
             }
+
         }
         Err(erro) => println!("Erro: {}", erro),
     }
