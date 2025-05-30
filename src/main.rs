@@ -111,7 +111,7 @@ pub struct KwicResult{
 
 impl fmt::Display for KwicResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {} **{}** {}",
+        write!(f, "{}: **{}** {} {}",
             self.key_word,
             self.key_word,
             self.right_context,
