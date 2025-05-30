@@ -44,12 +44,15 @@ fn main() {
 }
 
 
-pub static STOPWORDS: Lazy<HashSet<String>> = Lazy::new(||{
-    let content = fs::read_to_string("stopWords.txt")
-        .expect("Não foi possível processar o arquivo");
+pub static STOPWORDS: Lazy<HashSet<String>> = Lazy::new(|| {
+    let content = fs::read_to_string("stopWords.txt").unwrap_or_else(|_| {
+        eprintln!("Aviso: Não foi possível processar o arquivo stopWords.txt. Usando conjunto vazio de stopwords.");
+        String::new()
+    });
     content
-        .lines()
-        .map(|line| line.trim().to_lowercase())
+        .split(|c: char| c == ',' || c == '\n' || c == '\r')
+        .map(|word| word.trim().to_lowercase())
+        .filter(|word| !word.is_empty())
         .collect()
 });
 
@@ -74,7 +77,7 @@ fn parse_files(path:&str) -> Vec<String>{
 pub fn find_keyWords(linha: &[String], stopwords_set: &HashSet<String>) -> Vec<String> {
     let mut keyWords = Vec::<String>::new();
     for palavra in linha {
-        
+
         if !stopwords_set.contains(palavra) {
             keyWords.push(palavra.clone());
         }
