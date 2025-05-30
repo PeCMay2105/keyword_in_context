@@ -82,7 +82,7 @@ fn parse_files(path:&str) -> Vec<String>{
 pub fn find_keyWords(linha: &[String], stopwords_set: &HashSet<String>) -> Vec<String> {
     let mut keyWords = Vec::<String>::new();
     for palavra in linha {
-
+        
         if !stopwords_set.contains(palavra) {
             keyWords.push(palavra.clone());
         }
@@ -101,9 +101,9 @@ pub struct KwicSystem{
 #[derive(Debug, PartialEq)] // para usar nos testes
 pub struct KwicResult{
     pub n_line: usize,
-    pub left_context: String,
     pub key_word: String,
     pub right_context: String,
+    pub left_context: String,
     pub line: String,
 
 
@@ -113,9 +113,10 @@ impl fmt::Display for KwicResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}: {} **{}** {}",
             self.key_word,
-            self.left_context,
             self.key_word,
-            self.right_context)
+            self.right_context,
+            self.left_context,
+            )
     }
 
 }
@@ -188,9 +189,9 @@ impl KwicSystem{
 
             let individual_kwic = KwicResult{
                 n_line: *index,
-                left_context: String::from(left_context),
                 key_word: palavra.to_string(),
                 right_context: String::from(right_context),
+                left_context: String::from(left_context),  
                 line: line.to_string()
             };
             resultado.push(individual_kwic);
@@ -234,6 +235,219 @@ mod tests {
         
         assert_eq!(kwic.lines, linhas);
     }
+    //==================================================
+    // Testes para a função `normalize`
+    //==================================================
+
+    #[test]
+    fn test_normalize_basic() {
+        let kwic = KwicSystem::new();
+        // Caso original: remove pontuação e números, converte para minúsculas
+        assert_eq!(kwic.normalize("TeSTes #12312314"), "testes");
+    }
+
+    #[test]
+    fn test_normalize_with_hyphen_and_special_chars() {
+        let kwic = KwicSystem::new();
+        // O comportamento atual junta palavras com hífen. É importante testar e estar ciente disso.
+        assert_eq!(kwic.normalize("palavra-com-hífen"), "palavracomhífen");
+        assert_eq!(kwic.normalize("don't"), "dont");
+    }
+
+    #[test]
+    fn test_normalize_empty_and_no_alphabetic() {
+        let kwic = KwicSystem::new();
+        // Testando strings que resultam em uma string vazia
+        assert_eq!(kwic.normalize(""), "");
+        assert_eq!(kwic.normalize("123 !@#$ %^&*"), "");
+    }
+    
+    #[test]
+    fn test_normalize_unicode() {
+        let kwic = KwicSystem::new();
+        // Garante que caracteres acentuados (que são alfabéticos) são mantidos
+        assert_eq!(kwic.normalize("Ação"), "ação");
+    }
+
+
+    //==================================================
+    // Testes para a função `find_keyWords`
+    //==================================================
+    
+    #[test]
+    fn test_find_keywords_basic() {
+        let stopwords: HashSet<String> = HashSet::from(["de".to_string(), "o".to_string(), "a".to_string()]);
+        let linha: Vec<String> = vec!["testes".to_string(), "de".to_string(), "software".to_string()];
+        // Caso original
+        assert_eq!(find_keyWords(&linha, &stopwords), vec!["testes".to_string(), "software".to_string()]);
+    }
+
+    #[test]
+    fn test_find_keywords_all_stopwords() {
+        let stopwords: HashSet<String> = HashSet::from(["de".to_string(), "o".to_string(), "a".to_string()]);
+        let linha: Vec<String> = vec!["o".to_string(), "a".to_string(), "de".to_string()];
+        // Nenhum keyword deve ser retornado
+        assert!(find_keyWords(&linha, &stopwords).is_empty());
+    }
+
+    #[test]
+    fn test_find_keywords_no_stopwords() {
+        let stopwords: HashSet<String> = HashSet::from(["de".to_string(), "o".to_string(), "a".to_string()]);
+        let linha: Vec<String> = vec!["rust".to_string(), "programming".to_string(), "language".to_string()];
+        // Todas as palavras devem ser retornadas
+        assert_eq!(find_keyWords(&linha, &stopwords), vec!["rust", "programming", "language"]);
+    }
+    
+    #[test]
+    fn test_find_keywords_empty_input() {
+        let stopwords: HashSet<String> = HashSet::from(["de".to_string()]);
+        let linha: Vec<String> = vec![];
+        // Linha vazia deve retornar um vetor vazio
+        assert!(find_keyWords(&linha, &stopwords).is_empty());
+    }
+
+
+    //==================================================
+    // Testes para o `KwicSystem`
+    //==================================================
+    
+    #[test]
+    fn test_add_line_updates_index() {
+        let mut kwic = KwicSystem::new();
+        kwic.add_line("Primeira linha de teste.".to_string());
+        kwic.add_line("Segunda linha.".to_string());
+
+        // Verifica se as linhas foram adicionadas
+        assert_eq!(kwic.lines.len(), 2);
+        
+        // Verifica se o índice de posições (`pos_index`) foi populado corretamente
+        assert_eq!(kwic.pos_index.get("linha"), Some(&vec![0, 1]));
+        assert_eq!(kwic.pos_index.get("teste"), Some(&vec![0]));
+        assert_eq!(kwic.pos_index.get("segunda"), Some(&vec![1]));
+        // Palavra que não existe
+        assert_eq!(kwic.pos_index.get("naoexiste"), None);
+    }
+    
+    #[test]
+    fn test_search_keyword_not_found() {
+        let mut kwic = KwicSystem::new();
+        kwic.add_line("Uma linha qualquer.".to_string());
+        let results = kwic.search_keyword("inexistente");
+        // A busca por uma palavra que não está no índice deve retornar um vetor vazio
+        assert!(results.is_empty());
+    }
+
+    #[test]
+    fn test_search_keyword_at_start_of_line() {
+        let mut kwic = KwicSystem::new();
+        kwic.add_line("Linha para teste de software.".to_string());
+        
+        let expected = vec![
+            KwicResult {
+                n_line: 0,
+                left_context: "".to_string(),
+                key_word: "Linha".to_string(),
+                // Note o espaço no início do contexto direito
+                right_context: " para teste de software.".to_string(),
+                line: "Linha para teste de software.".to_string(),
+            }
+        ];
+        
+        let results = kwic.search_keyword("Linha");
+        assert_eq!(results, expected);
+    }
+
+    #[test]
+    fn test_search_keyword_in_middle_of_line() {
+        let mut kwic = KwicSystem::new();
+        kwic.add_line("Uma linha para teste.".to_string());
+        
+        let expected = vec![
+            KwicResult {
+                n_line: 0,
+                left_context: "uma linha ".to_string(),
+                key_word: "para".to_string(),
+                right_context: " teste.".to_string(),
+                line: "Uma linha para teste.".to_string(),
+            }
+        ];
+        
+        let results = kwic.search_keyword("para");
+        assert_eq!(results, expected);
+    }
+
+    #[test]
+    fn test_search_keyword_at_end_of_line() {
+        let mut kwic = KwicSystem::new();
+        kwic.add_line("Uma linha para teste".to_string());
+        
+        let expected = vec![
+            KwicResult {
+                n_line: 0,
+                left_context: "uma linha para ".to_string(),
+                key_word: "teste".to_string(),
+                right_context: "".to_string(),
+                line: "Uma linha para teste".to_string(),
+            }
+        ];
+        
+        let results = kwic.search_keyword("teste");
+        assert_eq!(results, expected);
+    }
+
+    #[test]
+    fn test_search_multiple_occurrences_in_different_lines() {
+        let mut kwic = KwicSystem::new();
+        kwic.add_line("O sistema é bom.".to_string()); // index 0
+        kwic.add_line("Este é outro sistema.".to_string()); // index 1
+        
+        let expected = vec![
+            KwicResult {
+                n_line: 0,
+                left_context: "o ".to_string(),
+                key_word: "sistema".to_string(),
+                right_context: " é bom.".to_string(),
+                line: "O sistema é bom.".to_string(),
+            },
+            KwicResult {
+                n_line: 1,
+                left_context: "este é outro ".to_string(),
+                key_word: "sistema".to_string(),
+                right_context: ".".to_string(),
+                line: "Este é outro sistema.".to_string(),
+            },
+        ];
+        
+        let results = kwic.search_keyword("sistema");
+        assert_eq!(results.len(), 2);
+        assert_eq!(results, expected);
+    }
+
+    #[test]
+    fn test_search_exposes_limitation_of_single_find_per_line() {
+        let mut kwic = KwicSystem::new();
+        // Esta linha contém a palavra "teste" duas vezes.
+        kwic.add_line("um teste para outro teste".to_string());
+        
+        let expected = vec![
+            KwicResult {
+                n_line: 0,
+                left_context: "um ".to_string(),
+                key_word: "teste".to_string(),
+                right_context: " para outro teste".to_string(),
+                line: "um teste para outro teste".to_string(),
+            }
+        ];
+
+        let results = kwic.search_keyword("teste");
+        
+        // A implementação atual com `find()` só encontra a PRIMEIRA ocorrência na linha.
+        // Um sistema KWIC completo deveria encontrar ambas.
+        // Este teste confirma o comportamento atual e expõe essa limitação.
+        assert_eq!(results.len(), 1, "Atenção: Apenas a primeira ocorrência da keyword na linha foi encontrada.");
+        assert_eq!(results, expected);
+    }
+}
 
     // #[test]
     // fn search_keyword_test() {
@@ -257,4 +471,3 @@ mod tests {
         
     //     assert_eq!(kwic_vector[0], result_vector[0]);        
     // }
-}
